@@ -1,0 +1,23 @@
+[package]
+name = "totm"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+bitfield-struct = "0.11.0"
+cortex-m = "0.7.7"
+cortex-m-rt = "0.7.5"
+cortex-m-semihosting = "0.5.0"
+embedded-hal = "1.0.0"
+nb = "1.1.0"
+panic-halt = "1.0.0"
+static_cell = "2.1.0"
+stm32f4xx-hal = { version = "0.22.1", features = ["stm32f411", "usb_fs"] }
+synopsys-usb-otg = "0.4.0"
+usb-device = "0.3.2"
+usbd-serial = "0.2.2"
+
+[[bin]]
+name = "totm"
+test = false
+bench = false
