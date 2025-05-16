@@ -46,63 +46,46 @@ fn kmain() -> ! {
     let mut pca = PCA9685::new(i2c);
 
     let _ = pca.set_pwm_frequency(50.Hz());
-    pca.set_duty_cycle(4, degrees_to_ds(0f32));
-    d.delay_ms(3000);
-    pca.set_duty_cycle(4, degrees_to_ds(40f32));
-    // let mut ds = 0f32;
-    // let mut inc = 0.01;
 
-    // loop {
-    //     ds += inc;
-    //     if ds >= 0.2 {inc = -0.01}
-    //     else if ds <= 0.0{
-    //         inc = 0.01
-    //     }
-    //     let _ = pca.set_duty_cycle(4, ds);
-    //     let _ = pca.set_duty_cycle(0, ds);
-    //     d.delay_ms(100);
+    let gpioa = dp.GPIOA.split();
+    let usb_dm = gpioa.pa11.into_alternate();
+    let usb_dp = gpioa.pa12.into_alternate();
 
-    // }
+    // Set up USB peripheral
+    let usb = USB {
+        usb_global: dp.OTG_FS_GLOBAL,
+        usb_device: dp.OTG_FS_DEVICE,
+        usb_pwrclk: dp.OTG_FS_PWRCLK,
+        pin_dm: usb_dm.into(),
+        pin_dp: usb_dp.into(),
+        hclk: clocks.hclk()
+    };
 
-    // let gpioa = dp.GPIOA.split();
-    // let usb_dm = gpioa.pa11.into_alternate();
-    // let usb_dp = gpioa.pa12.into_alternate();
-
-    // // Set up USB peripheral
-    // let usb = USB {
-    //     usb_global: dp.OTG_FS_GLOBAL,
-    //     usb_device: dp.OTG_FS_DEVICE,
-    //     usb_pwrclk: dp.OTG_FS_PWRCLK,
-    //     pin_dm: usb_dm.into(),
-    //     pin_dp: usb_dp.into(),
-    //     hclk: clocks.hclk()
-    // };
-
-    // // Create USB bus and serial port
-    // let usb_bus = UsbBus::new(usb, ep_mem);
-    // let mut serial = SerialPort::new(&usb_bus);
-    // let mut usb_dev = UsbDeviceBuilder::new(&usb_bus, UsbVidPid(0x16c0, 0x27dd))
-    // .strings(&[StringDescriptors::default()
-    // .manufacturer("kushurox")
-    // .product("totm")
-    // .serial_number("TEST")
-    // ]).unwrap()
-    // .device_class(USB_CLASS_CDC).build();
+    // Create USB bus and serial port
+    let usb_bus = UsbBus::new(usb, ep_mem);
+    let mut serial = SerialPort::new(&usb_bus);
+    let mut usb_dev = UsbDeviceBuilder::new(&usb_bus, UsbVidPid(0x16c0, 0x27dd))
+    .strings(&[StringDescriptors::default()
+    .manufacturer("kushurox")
+    .product("totm")
+    .serial_number("TEST")
+    ]).unwrap()
+    .device_class(USB_CLASS_CDC).build();
 
     loop{
-        // if usb_dev.poll(&mut [&mut serial]) {
-        //     let mut buf = [0u8; 64];
-        //     if let Ok(count) = serial.read(&mut buf) {
-        //         hprintln!("count: {}", count);
-        //         if count < 16 {continue;}
-        //         let vals: PWMVals = buf.into();
-        //         hprintln!("duties: {} {} {} {}", vals.duty1, vals.duty2, vals.duty3, vals.duty4);   //  remove this when working with the real thing
-        //         let _ = pca.set_duty_cycle(0, vals.duty1);
-        //         let _ = pca.set_duty_cycle(1, vals.duty2);      // father forgive me, for I have sinned to count from 1
-        //         let _ = pca.set_duty_cycle(2, vals.duty3);
-        //         let _ = pca.set_duty_cycle(3, vals.duty4);
-        //     }
-        // }
+        if usb_dev.poll(&mut [&mut serial]) {
+            let mut buf = [0u8; 64];
+            if let Ok(count) = serial.read(&mut buf) {
+                hprintln!("count: {}", count);
+                if count < 16 {continue;}
+                let vals: PWMVals = buf.into();
+                hprintln!("duties: {} {} {} {}", vals.duty1, vals.duty2, vals.duty3, vals.duty4);   //  remove this when working with the real thing
+                let _ = pca.set_duty_cycle(0, vals.duty1);
+                let _ = pca.set_duty_cycle(4, vals.duty2);      // father forgive me, for I have sinned to count from 1
+                let _ = pca.set_duty_cycle(8, vals.duty3);
+                let _ = pca.set_duty_cycle(3, vals.duty4);
+            }
+        }
     };
 }
 
